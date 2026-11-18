@@ -1,0 +1,4 @@
+guide-src/raw/
+guide-src/guide-artifact.html
+dist/
+__pycache__/
