@@ -1,0 +1,6 @@
+{
+  "about": "Written by `python3 release.py --publish` (the GitHub workflow) each time a version goes live: a fingerprint of the app's code for that version. If the code changes again, the docs check stops publishing until src/release.json has a new version with a change-log entry. Don't edit by hand.",
+  "published": {
+    "1.2.0": { "fingerprint": "a0a03d29f78ef2d338c597f1ec054ee6bf7e0994a61956a0cc1ceff7635911b9", "date": "2026-11-18" }
+  }
+}

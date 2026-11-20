@@ -6,9 +6,10 @@
 
 - **No install, no server.** The app is a single `index.html`. Open it, or host it free on GitHub Pages.
 - **Private by default.** Everything is saved in your browser on your device. Nothing is uploaded.
-- **Getting-started tour built in.** Step-by-step slides with real screenshots — an *Everyday use* track and a *Setting up* track for admins. It opens the first time HatRack starts; Help (?) → *Getting started tour* reopens it. After each update, a short *What's new* tour shows what changed.
+- **Getting-started tour built in.** Step-by-step slides with real screenshots — an *Everyday use* track and a *Setting up* track for admins. It opens the first time HatRack starts; Help (?) → *Getting started tour* reopens it.
+- **A change log, and updates for your role.** Configure → *Change log* keeps every release and change in order, with filters and CSV / Markdown / JSON downloads ([CHANGELOG.md](CHANGELOG.md) has the same list). After an update, each person sees an illustrated *What's new* with just the changes for their role — everyday use or admin.
 - **Illustrated guide built in.** Help (?) → *Visual guide*, or open `guide.html`. Every screen, menu and setting is annotated.
-- **Docs that keep up.** Every update re-takes the screenshots and rebuilds the guide and the tour; the build stops if a new feature isn't documented.
+- **Docs that keep up.** Every update re-takes the screenshots and rebuilds the guide, the tour and the change log; publishing stops if a new feature isn't documented or a change to the app isn't in the change log.
 
 ---
 
@@ -20,7 +21,10 @@
 | `guide.html` + `guide/` | The visual guide, the tour (`guide/tour.js`) and their screenshots — keep the folder next to `index.html` |
 | `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `manifest.webmanifest` | Home-screen icons and install support for phones |
 | `.nojekyll` | Tells GitHub Pages to serve the files as they are |
-| `src/`, `build.py` | The app's source; `src/release.json` holds the version and the What's new list |
+| `src/`, `build.py` | The app's source; `src/release.json` holds the version and the change log |
+| `CHANGELOG.md` | Every release and change, newest first — generated from `src/release.json` |
+| `src/release-lock.json` | Written when a version is published, so later code changes need a new change-log entry |
+| `CLAUDE.md` | Rules for anyone (or any AI assistant) changing the app |
 | `release.py`, `guide-src/` | Rebuilds the screenshots, guide and tour, and checks every feature is documented (`guide-src/features.json`) |
 | `.github/workflows/release.yml` | Runs `release.py` and publishes the site on every push |
 
@@ -30,6 +34,7 @@
 2. Upload **everything in this folder**, including the `guide`, `src`, `guide-src` and `.github` folders. (The web uploader skips folders that start with a dot — use the command line below, or GitHub Desktop, so `.github` comes along.)
 3. Go to **Settings → Pages**. Under **Build and deployment**, set **Source** to **GitHub Actions**.
 4. Open the **Actions** tab: the *Build, document and publish* workflow runs on every push (or click **Run workflow**). In a few minutes the app is live at `https://<your-username>.github.io/hatrack/`, with the guide at `…/hatrack/guide.html`.
+5. *Optional — your own domain.* At your DNS provider add a **CNAME** record `hatrack` → `<your-username>.github.io`, then in **Settings → Pages → Custom domain** enter `hatrack.your-domain.com`, save, and tick **Enforce HTTPS** once it's offered. Tasks are saved per web address, so download a backup at the old address first and restore it at the new one.
 
 Prefer not to use Actions? Set **Source** to *Deploy from a branch* → **main** / **(root)** instead. The site works the same, but the screenshots, guide and tour only refresh when you run `python3 release.py` yourself.
 
@@ -109,6 +114,12 @@ Paste a long list, open a `.txt` / `.md` / `.csv` file, or drop text onto a boar
 
 HatRack has no accounts. The person who sets it up can **Configure → Data → Download setup template** (groups, levels, keywords, types, priorities, statuses, durations, fields — no tasks) and share it. Everyone else loads it with **Restore → Apply setup**, which adds what's missing (matched by name) and keeps their tasks.
 
+### Change log and roles
+
+**Configure → Change log** lists every release and change in order — oldest first or newest first — with search, filters (who it's for, kind of change) and downloads as CSV, Markdown or JSON. It also shows when each version was first opened on this device.
+
+Each change is marked for **everyone** or for **admins**. Every device has a role, *Everyday use* or *Admin* (set on the Change log page or in What's new; applying a setup template sets a new device to Everyday use). The first time HatRack opens after an update, What's new shows the changes for that role — every one since the version the person last used — and nothing at all if none apply. Roles decide what people are shown; they aren't permissions.
+
 ## Shortcuts you can type in any task
 
 | Type | Meaning | Examples |
@@ -134,14 +145,15 @@ HatRack has no accounts. The person who sets it up can **Configure → Data → 
 The app is assembled from `src/` (one stylesheet, a page shell and numbered script files). For every update:
 
 1. Make the change in `src/`.
-2. In `src/release.json`, raise `version` and add an entry at the top of `changelog` (title, one-line text, and optionally the tour step it relates to). People see it as a *What's new* tour the next time they open HatRack.
+2. In `src/release.json`, raise `version`, set `date`, and add an entry at the top of `changelog`: a release `title` and one item per change with `kind` (new / improved / fixed / changed / removed), `audience` (`all` or `admin`), `title`, one sentence of `text`, and optionally the tour `slide` it relates to. People see it in *What's new* the next time they open HatRack; admins keep the whole history in Configure → Change log.
 3. If you added a control (a button, view, Configure tab, export format, bulk action or menu item), list it in `guide-src/features.json` with its guide section and tour step, and add the step in `guide-src/build_guide.py` (`TOUR_STEPS`).
 4. Push. The workflow runs `release.py`, which:
    - builds `index.html`,
    - re-takes every screenshot from the running app,
    - rebuilds `guide.html` and the tour (`guide/tour.js`),
-   - checks that every control is documented, every numbered spot still matches the app, and the screenshots came from this build,
-   - then publishes the site and commits the refreshed files.
+   - writes `CHANGELOG.md`,
+   - checks that every control is documented, every numbered spot still matches the app, the screenshots came from this build, and the change log is complete — if the app's code changed since its version was published (`src/release-lock.json`), publishing waits for a new version and change-log entry,
+   - then publishes the site, records the version as published, and commits the refreshed files.
 
 If the check fails, the site is not published and the Actions log says exactly what is missing. To run the same thing locally: `pip install playwright pillow`, `python3 -m playwright install chromium`, then `python3 release.py`.
 

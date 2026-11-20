@@ -1,5 +1,6 @@
-# Rebuilds HatRack's screenshots, guide and getting-started tour on every push, checks that
-# every feature is documented, then publishes the site with GitHub Pages.
+# Rebuilds HatRack's screenshots, guide, getting-started tour and change log on every push, checks that
+# every feature is documented and every change to the app is in the change log, then publishes the
+# site with GitHub Pages and records the published version in src/release-lock.json.
 # One-time setup: Settings → Pages → Build and deployment → Source: GitHub Actions.
 name: Build, document and publish
 
@@ -29,14 +30,14 @@ jobs:
         run: |
           pip install playwright pillow
           python -m playwright install --with-deps chromium
-      - name: Build the app, re-take screenshots, rebuild the guide and tour, check docs
-        run: python release.py
+      - name: Build the app, re-take screenshots, rebuild the guide, tour and change log, check docs
+        run: python release.py --publish
       - name: Save the refreshed files back to the repository
         run: |
           git config user.name "hatrack-docs"
           git config user.email "hatrack-docs@users.noreply.github.com"
-          git add index.html guide.html guide guide-src/shots.json guide-src/capture-meta.json
-          git diff --cached --quiet || (git commit -m "Refresh screenshots, guide and tour [skip ci]" && git push)
+          git add index.html guide.html guide guide-src/shots.json guide-src/capture-meta.json CHANGELOG.md src/release-lock.json
+          git diff --cached --quiet || (git commit -m "Refresh screenshots, guide, tour and change log [skip ci]" && git push)
       - name: Collect the site
         run: |
           mkdir -p _site

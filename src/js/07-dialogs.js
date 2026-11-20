@@ -375,6 +375,6 @@ function helpMenu(anchor) {
     { feature: 'help:tips', label: 'Shortcuts & tips', hint: '?', onPick: () => openHelp() },
     { sep: true },
     { feature: 'help:admintour', label: 'Setting-up tour (admins)', onPick: () => openTour('admin') },
-    { feature: 'help:whatsnew', label: `What’s new in ${RELEASE.version}`, onPick: () => openTour('whatsnew') },
+    { feature: 'help:whatsnew', label: `What’s new in ${RELEASE.version}`, onPick: () => openWhatsNew() },
   ]);
 }

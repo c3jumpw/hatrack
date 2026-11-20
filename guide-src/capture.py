@@ -9,7 +9,8 @@ Run after `python3 build.py` (release.py runs everything in order).
   python3 guide-src/capture.py --only tour [font-folder]   just the tour screens (needs guide/tour.js)
 
 A callout whose element can't be found stops the run with an error: when the app changes,
-the screenshots and their labels have to change with it.
+the screenshots and their labels have to change with it. A key starting with "?" is optional:
+it's simply left out when that element isn't on screen (used where content depends on the release).
 """
 import base64, datetime, hashlib, json, sys
 from pathlib import Path
@@ -84,7 +85,9 @@ class Shooter:
         pins = []
         for i, (key, sel, anchor) in enumerate(callouts):
             loc = pg.locator(sel).first
+            optional = key.startswith('?'); key = key.lstrip('?')
             if not loc.count():
+                if optional: continue
                 print(f'  ! {name}: callout {key} not found ({sel})'); ERRORS.append(f'{name}:{key}'); continue
             bb = loc.bounding_box()
             if not bb: print(f'  ! {name}: callout {key} has no box'); ERRORS.append(f'{name}:{key}'); continue
@@ -129,6 +132,14 @@ def tour_shots(S):
     pg.click('.tour-choice >> nth=0'); pg.wait_for_timeout(200)
     pg.click('.tour-dots button >> nth=8'); pg.wait_for_timeout(500)
     S.shot(pg, 'tour-slide', clip='.modal', callouts=[('shot', '.tour-frame', 'tl'), ('legend', '.tour-legend', 'l'), ('try', '.tour-acts .btn', 'r'), ('dots', '.tour-dots', 'tl'), ('next', '.tour-foot .primary', 't')])
+    pg.context.close()
+    # the What's new summary someone sees the first time they open this release (as an admin, so every change shows)
+    pg = S.fresh(sample=True)
+    pg.evaluate("() => { setRole('admin'); openWhatsNew({ since: (RELEASE.changelog[1] || {}).version || '0.0.0', auto: true }); }")
+    pg.wait_for_timeout(1600)
+    S.shot(pg, 'whatsnew', clip='.modal', callouts=[('hero', '.wn-hero h2', 'r'), ('role', '.wn-role .seg', 'b'), ('card', '.wn-card >> nth=0', 'tr'),
+                                                    ('kind', '.wn-card >> nth=0 >> .kchip', 'r'), ('?show', '.wn-card .wn-cbody .linkish', 'r'),
+                                                    ('?walk', '[data-wnwalk]', 't'), ('log', '[data-wnlog]', 't'), ('help', '.modal-head .help-link', 'b')])
     pg.context.close()
 
 def save_manifest():
@@ -351,6 +362,15 @@ def run():
         pg.click('[data-tab=data]'); pg.wait_for_timeout(150)
         S.shot(pg, 'cfg-data', clip='#set-pane', callouts=[('backup', '[data-data=backup]', 'r'), ('template', '[data-data=template]', 'r'),
                                                          ('restore', '#set-pane label.btn:has-text("Restore")', 'r'), ('wipe', '[data-data=wipe]', 'r')])
+        # change log (admins)
+        pg.set_viewport_size({'width': 1440, 'height': 1200})
+        pg.click('[data-tab=changelog]'); pg.wait_for_timeout(200)
+        pg.evaluate("() => document.getElementById('view').scrollTo(0, 0)")
+        pane = pg.locator('#set-pane').bounding_box()
+        S.shot(pg, 'cfg-changelog', clip={'x': pane['x'], 'y': pane['y'], 'width': pane['width'], 'height': min(pane['height'], 1040)}, callouts=[
+            ('stats', '.cl-stats', 'r'), ('role', '.cl-role .seg', 'b'), ('search', '[data-cl=q]', 'b'), ('filters', '[data-cl=aud]', 'b'),
+            ('order', '[data-clorder=desc]', 'b'), ('dl', '.cl-dl', 'b'), ('release', '.cl-rel >> nth=0 >> .cl-ver', 'l'),
+            ('kind', '.cl-rel >> nth=0 >> .kchip >> nth=0', 'l'), ('?show', '.cl-rel >> nth=0 >> [data-clshow] >> nth=0', 'l'), ('how', '.pane-head .help-link', 'l')])
         # the custom field as board columns
         pg.click('.crumbs button[data-view=board]'); pg.wait_for_timeout(150)
         pg.evaluate(f"""() => {{ const pick = ['Draft the 2027', 'Q4 cash-flow', 'Pull September']; const quick = ['Send Vance', 'School picture', 'Follow up with Greenway']; const calls = ['Call Mom', 'Ask Priya'];

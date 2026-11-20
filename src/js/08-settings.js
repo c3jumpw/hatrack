@@ -1,6 +1,6 @@
 /* ============ HatRack — Configure (settings) ============ */
 
-const SET_TABS = [['hierarchy', 'Groups & levels'], ['types', 'Task types'], ['priorities', 'Priorities'], ['statuses', 'Statuses'], ['durations', 'Durations'], ['fields', 'Custom fields'], ['data', 'Data & backup']];
+const SET_TABS = [['hierarchy', 'Groups & levels'], ['types', 'Task types'], ['priorities', 'Priorities'], ['statuses', 'Statuses'], ['durations', 'Durations'], ['fields', 'Custom fields'], ['data', 'Data & backup'], ['changelog', 'Change log']];
 let openAreaNotes = new Set(), cfgSnapEl = null;
 
 function renderSettings() {
@@ -21,6 +21,7 @@ function paneHTML(tab) {
     case 'durations': return paneDurations();
     case 'fields': return paneFields();
     case 'data': return paneData();
+    case 'changelog': return paneChangelog();
   }
   return paneHierarchy();
 }
@@ -102,19 +103,20 @@ function paneData() {
     <h3>Restore</h3><div class="set-actions"><label class="btn" style="cursor:pointer">Restore from a backup…<input type="file" id="bk-restore" accept=".json,application/json" hidden></label><span class="muted sm">Load a backup or a setup template. You’ll choose whether to merge or replace.</span></div>
     <h3>Sample data</h3><div class="set-actions"><button class="btn" data-data="sample">Add the sample rack</button><span class="muted sm">Four example businesses and obligations with tasks to sort.</span></div>
     <h3>Start over</h3><div class="set-actions"><button class="btn danger" data-data="wipe">Delete everything</button></div>
-    <h3>Version</h3><div class="set-actions"><span>HatRack ${esc(APP_VERSION)} · released ${esc(fmtLongDate(RELEASE.date))}</span><button class="btn sm" data-tourwn>What’s new</button><button class="btn sm" data-tourstart>Getting started tour</button></div>`;
+    <h3>Version</h3><div class="set-actions"><span>HatRack ${esc(APP_VERSION)} · released ${esc(fmtLongDate(RELEASE.date))}</span><button class="btn sm" data-tourwn>What’s new</button><button class="btn sm" data-tab="changelog">Change log</button><button class="btn sm" data-tourstart>Getting started tour</button></div>`;
 }
 
 /* ---------- events ---------- */
 function onSettingsFocus(e) {
   if (U.view !== 'settings') return;
-  const el = e.target; if (!el.closest('#set-pane') || !/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.type === 'file') return;
+  const el = e.target; if (!el.closest('#set-pane') || !/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.type === 'file' || el.dataset.cl) return;
   if (cfgSnapEl !== el) { snapshot('Edit settings'); cfgSnapEl = el; }
 }
 function cfgItem(el) { const row = el.closest('[data-kind]'); if (!row) return null; const list = D[row.dataset.kind]; return { row, kind: row.dataset.kind, list, item: list.find(x => x.id === row.dataset.id) }; }
 function onSettingsInput(e) {
   if (U.view !== 'settings') return;
   const el = e.target;
+  if (el.dataset.cl) return onChangelogInput(el);
   if (el.dataset.lvl !== undefined) { D.levelNames[+el.dataset.lvl] = el.value.trim() || `Level ${+el.dataset.lvl + 1}`; save(); return; }
   const c = cfgItem(el); if (!c || !c.item || !el.dataset.k) return;
   const k = el.dataset.k;
@@ -127,6 +129,7 @@ function onSettingsInput(e) {
 function onSettingsChange(e) {
   if (U.view !== 'settings') return;
   const el = e.target;
+  if (el.dataset.cl) return;
   if (el.id === 'bk-restore') { const f = el.files?.[0]; el.value = ''; if (f) restoreBackup(f); return; }
   if (el.dataset.k === 'kind' || el.dataset.k === 'done' || el.dataset.k === 'color' || el.dataset.lvl !== undefined) {
     if (el.dataset.k === 'done' && !D.statuses.some(s => !s.done)) { el.checked = false; cfgItem(el).item.done = false; toast('Keep at least one status that isn’t done.'); }
@@ -143,7 +146,8 @@ async function onSettingsClick(e) {
   if (b.dataset.durop === 'add') { const m = parseDuration($('#dur-new').value); if (!m) { toast('Try something like 45m, 1h30m or 2d.'); return; } mutate('Add duration', () => { if (!D.durations.includes(m)) D.durations.push(m); }); return; }
   if (b.dataset.durop === 'reset') { mutate('Reset durations', () => { D.durations = defaultData().durations; }); return; }
   if (b.dataset.data) return dataAction(b.dataset.data);
-  if (b.hasAttribute('data-tourwn')) return openTour('whatsnew');
+  if (onChangelogClick(b)) return;
+  if (b.hasAttribute('data-tourwn')) return openWhatsNew();
   if (b.hasAttribute('data-tourstart')) return openTour('start');
   const op = b.dataset.op; if (!op) return;
   const c = cfgItem(b); if (!c || !c.item) return;
@@ -232,6 +236,7 @@ const blobToDataURL = b => new Promise((res, rej) => { const r = new FileReader(
 /** a setup template: everything in Configure, no tasks — for handing a standard structure to a team */
 function downloadTemplate() {
   const out = clone(D); out.tasks = []; out.kind = 'hatrack-setup'; out.exportedAt = new Date().toISOString();
+  if (!U.role) setRole('admin');
   downloadText(`hatrack-setup-${todayStr()}.json`, JSON.stringify(out, null, 2), 'application/json');
   toast('Setup template downloaded — share it, then load it with Restore');
 }
@@ -299,5 +304,7 @@ async function restoreBackup(file) {
     });
     normalizeData();
   });
+  // someone applying an admin's setup template is a team member: show them updates for everyday use
+  if (isTemplate && !U.role) { setRole('user'); toast('Setup applied. This device shows updates for Everyday use — change it in Configure → Change log.', { undo: true }); return; }
   saveUI(); toast(isTemplate ? 'Setup applied' : choice === 'replace' ? 'Backup restored' : 'Backup merged', { undo: true });
 }

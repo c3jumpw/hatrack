@@ -26,6 +26,7 @@ def fig(name, legend=(), caption='', alt='', size='wide', cols=2, zoom=None):
     """an annotated screenshot. legend: [(pin key, title, text)]"""
     m = M[name]
     pins, items = [], []
+    legend = [(k.lstrip('?'), t, x) for k, t, x in legend if not k.startswith('?') or any(p['key'] == k[1:] for p in m['pins'])]
     for i, (key, title, text) in enumerate(legend, 1):
         p = next((p for p in m['pins'] if p['key'] == key), None)
         if not p:
@@ -63,8 +64,8 @@ TOC = [
     ('board', 'user', 'Sort on the board'), ('subtasks', 'user', 'Subtasks & subnotes'), ('editor', 'user', 'The task editor'),
     ('views', 'user', 'List, Outline, Reports'), ('export', 'user', 'Export'),
     ('admin', 'admin', 'Setting up'), ('admin-groups', 'admin', 'Groups & levels'), ('admin-types', 'admin', 'Types, priorities, statuses'),
-    ('admin-fields', 'admin', 'Custom fields'), ('admin-data', 'admin', 'Backups & templates'), ('admin-deploy', 'admin', 'Put it online'), ('admin-docs', 'admin', 'Keeping docs current'),
-    ('keys', 'all', 'Keyboard'), ('mobile', 'all', 'Phones & dark mode'), ('faq', 'all', 'Questions'), ('whats-new', 'all', 'What’s new'),
+    ('admin-fields', 'admin', 'Custom fields'), ('admin-data', 'admin', 'Backups & templates'), ('admin-changelog', 'admin', 'Change log & updates'), ('admin-deploy', 'admin', 'Put it online'), ('admin-docs', 'admin', 'Keeping docs current'),
+    ('keys', 'all', 'Keyboard'), ('mobile', 'all', 'Phones & dark mode'), ('faq', 'all', 'Questions'), ('whats-new', 'all', 'Change log'),
 ]
 
 # ---------------------------------------------------------------- content
@@ -115,7 +116,7 @@ TOUR_FIGS = ''
 if 'tour-welcome' in M and 'tour-slide' in M:
     TOUR_FIGS = fig("tour-welcome", [("tabs", "Three tracks:", "Everyday use, Setting up, and What’s new."), ("user", "Everyday use", "— capture, import, triage, sort, nest, review, export."), ("admin", "Setting up", "— groups, keywords, types, fields, backups, templates, hosting."), ("help", "How this works", "opens this guide.")], caption="The welcome screen. It opens by itself the first time HatRack starts.", size="mid") + fig("tour-slide", [("shot", "A real screen", "with numbered spots."), ("legend", "What each number is.", "Hover to highlight it."), ("try", "Try it", "jumps to the feature; the tour remembers where you were."), ("dots", "Every step", "— click to jump. ← and → keys work too."), ("next", "Next", "and Back.")], caption="A step of the Everyday use track.")
 S.append(section('tour', 'all', 'Getting started tour', f'''
-<p>For a guided start, HatRack has a slide-by-slide tour built in, using the same screenshots as this guide. Open it from <b>Help (?) → Getting started tour</b>. It opens by itself the first time HatRack starts, and after each update it shows a short <b>What’s new</b> track instead.</p>
+<p>For a guided start, HatRack has a slide-by-slide tour built in, using the same screenshots as this guide. Open it from <b>Help (?) → Getting started tour</b>. It opens by itself the first time HatRack starts. After each update, a <b>What’s new</b> summary opens instead, with the changes that apply to you (<a href="#admin-changelog">more on updates</a>).</p>
 {TOUR_FIGS}
 <p class="tip-line">The tour, this guide and every screenshot are rebuilt for each release, so they always match the version you’re using — this is HatRack {VER}.</p>
 ''', 'Step-by-step slides inside HatRack, for everyday use and for setting up.'))
@@ -368,6 +369,7 @@ S.append(section('admin', 'admin', 'Setting up HatRack', '''
 <li><b>Tune the lists.</b> Task types, priorities, statuses and time estimates.</li>
 <li><b>Add custom fields</b> if you track anything else — client, energy, location.</li>
 <li><b>Share a setup template</b> so others start with the same structure.</li>
+<li><b>Keep the change log.</b> Record each update so everyone sees what changed for them.</li>
 <li><b>Put HatRack online</b> and add it to your phone’s home screen.</li>
 </ol>
 ''', 'A short checklist, then the details.'))
@@ -410,16 +412,61 @@ S.append(section('admin-data', 'admin', 'Backups & setup templates', f'''
 <div class="warn"><b>Where the data lives.</b> In this browser, at this web address. A different browser, device or address starts empty, and clearing site data erases it. Download a backup now and then.</div>
 ''', 'Your data never leaves the browser unless you download it.'))
 
+CL_FIG = fig("cfg-changelog", [
+    ("stats", "At a glance:", "the current version, how many releases and changes, and how many were for admins only."),
+    ("role", "Updates for your role", "on this device: Everyday use or Admin."),
+    ("search", "Search", "every change by word."), ("filters", "Filter", "by who it’s for, and by kind: new, improved, fixed, changed or removed."),
+    ("order", "Order:", "oldest first (chronological) or newest first."), ("dl", "Download", "the whole log as CSV, Markdown or JSON, for records or other tools."),
+    ("release", "Each release:", "version, date, name — and when this device first opened it."), ("kind", "Each change:", "its kind, who it’s for, and what changed."),
+    ("?show", "Show me", "opens the tour at that feature."), ("how", "How this works", "opens this section.")],
+    caption="Configure → Change log.", size="mid") if 'cfg-changelog' in M else ''
+WN_FIG = fig("whatsnew", [
+    ("hero", "This update", "— and the version the person came from, if they skipped some."), ("role", "Showing changes for", "Everyday use or Admin. Switching it here also saves it."),
+    ("card", "One card per change,", "with a screenshot when there is one."), ("kind", "What kind of change", "and, for setup changes, an Admins tag."),
+    ("?show", "Show me", "opens the tour on that feature."), ("?walk", "Walk me through it", "steps through every change as tour slides."),
+    ("log", "Full change log", "opens Configure → Change log.")],
+    caption="What an admin sees the first time they open this release.", size="mid") if 'whatsnew' in M else ''
+EXAMPLE = e(json.dumps({"version": "1.4.0", "date": "2026-12-02", "changelog": [{"version": "1.4.0", "date": "2026-12-02", "title": "Calendar view", "items": [
+    {"kind": "new", "audience": "all", "title": "Calendar view", "text": "See dated tasks on a month grid; drag to reschedule.", "slide": "u-calendar"},
+    {"kind": "fixed", "audience": "admin", "title": "Template keywords", "text": "Applying a setup template no longer duplicates keywords."}]}, "…older releases stay below…"]}, indent=2, ensure_ascii=False))
+S.append(section('admin-changelog', 'admin', 'Change log & updates', f"""
+<p>HatRack keeps a dated record of every release: what changed, what kind of change it was, and who it’s for. Admins see the whole history in <b>Configure → Change log</b>. Everyone else sees the part that applies to them, once, the first time they open HatRack after an update.</p>
+{CL_FIG}
+<h3>What people see after an update</h3>
+<p>The first time HatRack opens after an update, a <b>What’s new</b> summary appears with only the changes for that person’s role. Someone who skipped a few versions gets every change since the one they last used. If an update has nothing for them, nothing opens. Help (?) → <b>What’s new</b> shows it again any time.</p>
+{WN_FIG}
+<h3>Roles</h3>
+<table class="tbl"><thead><tr><th>Role</th><th>Sees after an update</th><th>How it’s set</th></tr></thead><tbody>
+<tr><td><b>Everyday use</b></td><td>Changes marked for <b>everyone</b> — new features, fixes and changes to daily work.</td><td>Chosen on the Change log page or in What’s new. Applying an admin’s setup template switches a new device to this.</td></tr>
+<tr><td><b>Admin</b></td><td>Everything, including changes marked <b>Admins</b> — setup, backups, hosting, the docs.</td><td>The starting role. Downloading a setup template keeps it.</td></tr>
+</tbody></table>
+<p class="note">HatRack has no sign-in, so a role is a choice saved on each device, not a permission: it decides which updates someone is shown. “First opened” dates on the Change log page are per device too.</p>
+<h3>Recording a change</h3>
+<ol class="checklist">
+<li>In <code>src/release.json</code>, raise <code>version</code> (1.3.0 → 1.3.1 for a fix, 1.4.0 for a feature) and set <code>date</code>.</li>
+<li>Add an entry at the <b>top</b> of <code>changelog</code> with the same version and date, a short <code>title</code>, and one item per change.</li>
+<li>For each item, set <code>kind</code> (new, improved, fixed, changed, removed), <code>audience</code> (<code>all</code> or <code>admin</code>), a <code>title</code> and one sentence of <code>text</code>. Optionally add <code>slide</code>, the tour step to open from <b>Show me</b>.</li>
+<li>Push. The workflow rebuilds the app, the guide, the tour and <code>CHANGELOG.md</code> from the same list, then publishes.</li>
+</ol>
+<pre class="code"><code>{EXAMPLE}</code></pre>
+<div class="warn"><b>The log can’t skip a change.</b> When a version goes live, the workflow records a fingerprint of the app’s code for it in <code>src/release-lock.json</code>. If the code changes again under the same version, the docs check stops publishing until there’s a new version with a change-log entry. Entries with a missing kind, audience, title, text or date stop it too.</div>
+""", 'Every update, recorded — and shown to the people it affects.'))
+
 FILES = [('index.html', 'the app'), ('guide.html', 'this guide'), ('guide/', 'its screenshots — keep the folder'), ('apple-touch-icon.png', 'iPhone home-screen icon'),
          ('icon-192.png · icon-512.png', 'Android and desktop icons'), ('manifest.webmanifest', 'makes it installable'), ('.nojekyll', 'tells GitHub to serve files as-is'), ('README.md', 'notes for the repository')]
 S.append(section('admin-deploy', 'admin', 'Put HatRack online', f'''
 <div class="pair">
 <div><h3>The files</h3><ul class="files">{"".join(f"<li><code>{e(a)}</code><span>{e(b)}</span></li>" for a, b in FILES)}</ul></div>
 <div><h3>GitHub Pages</h3><ol class="checklist">
-<li>Create a repository on GitHub.</li>
-<li>Upload every file and the <code>guide</code> folder from the download.</li>
-<li>Settings → Pages → Deploy from a branch → <b>main</b>, <b>/ (root)</b> → Save.</li>
-<li>After a minute, open <code>https://your-name.github.io/repository-name/</code>.</li></ol>
+<li>Create a repository on GitHub and push every file, including the <code>.github</code>, <code>guide</code>, <code>src</code> and <code>guide-src</code> folders.</li>
+<li>Settings → Pages → Build and deployment → Source: <b>GitHub Actions</b>.</li>
+<li>Each push rebuilds the app, the docs and the change log, then publishes. The first takes a few minutes.</li>
+<li>Open <code>https://your-name.github.io/repository-name/</code>.</li></ol>
+<h3>Your own domain</h3>
+<ol class="checklist">
+<li>At your DNS provider, add a <b>CNAME</b> record: name <code>hatrack</code>, value <code>your-name.github.io</code>.</li>
+<li>Settings → Pages → <b>Custom domain</b>: enter <code>hatrack.your-domain.com</code>, Save, then tick <b>Enforce HTTPS</b>.</li>
+<li>Tasks are saved per address: download a backup at the old address first, then Restore at the new one.</li></ol>
 <p class="muted sm">Any static host works the same way. You can also just double-click <code>index.html</code> on your computer.</p></div>
 </div>
 <div class="install">
@@ -434,11 +481,11 @@ S.append(section('admin-docs', 'admin', 'Keeping the guide and tour current', f'
 <p>The guide, the tour and every screenshot are generated from the running app, so an update to HatRack updates its documentation in the same step.</p>
 <ol class="checklist">
 <li><b>Change the app</b> in <code>src/</code>.</li>
-<li><b>Note the change</b> in <code>src/release.json</code>: raise the version and add a line to the changelog. People see it as a <b>What’s new</b> tour the next time they open HatRack.</li>
+<li><b>Record the change</b> in <code>src/release.json</code>: raise the version and add an entry to the change log saying what changed and who it’s for (<a href="#admin-changelog">how</a>). People see it in <b>What’s new</b> the next time they open HatRack, and it’s kept in Configure → Change log.</li>
 <li><b>Push to GitHub.</b> The included workflow rebuilds the app, re-takes every screenshot, regenerates this guide and the tour, checks them, and publishes the site. (One-time setup: Settings → Pages → Source: <b>GitHub Actions</b>.)</li>
 </ol>
 <p>On your own computer, <code>python3 release.py</code> does the same thing.</p>
-<div class="warn"><b>The build stops on undocumented features.</b> A new button, view, Configure tab, export format or bulk action has to be listed in <code>guide-src/features.json</code> with a guide section and a tour step, and every numbered spot on every screenshot has to still match the app. Otherwise the check fails and the site isn’t published until the docs catch up.</div>
+<div class="warn"><b>The build stops on undocumented features and unrecorded changes.</b> If the app’s code changed since its version was published, publishing waits for a new version and change-log entry. A new button, view, Configure tab, export format or bulk action has to be listed in <code>guide-src/features.json</code> with a guide section and a tour step, and every numbered spot on every screenshot has to still match the app. Otherwise the check fails and the site isn’t published until the docs catch up.</div>
 ''', 'Every release rebuilds the screenshots, the guide and the tour.'))
 
 S.append(section('keys', 'all', 'Keyboard', f'''
@@ -476,13 +523,19 @@ FAQ = [
 ]
 S.append(section('faq', 'all', 'Questions', '<div class="faq">' + ''.join(f'<details><summary>{e(q)}</summary><p>{e(a)}</p></details>' for q, a in FAQ) + '</div>'))
 
+KINDS = {'new': 'New', 'improved': 'Improved', 'fixed': 'Fixed', 'changed': 'Changed', 'removed': 'Removed'}
+def _chg(it):
+    k = it.get('kind', 'new')
+    return (f"<li><span class='kchip k-{k}'>{KINDS[k]}</span><div><b>{e(it['title'])}</b>"
+            f"{' <span class=achip>Admins</span>' if it.get('audience') == 'admin' else ''}<span>{e(it['text'])}</span></div></li>")
 def _wn():
     out = []
     for r in REL['changelog']:
-        items = ''.join(f"<li><b>{e(it['title'])}.</b> {e(it['text'])}</li>" for it in r['items'])
-        out.append(f"<h3>{e(r['version'])} <span class='muted sm' style='font-family:var(--font-ui);font-weight:400'>{e(r['date'])}</span></h3><ul class='new'>{items}</ul>")
-    return ''.join(out)
-S.append(section('whats-new', 'all', f'What’s new in {VER}', _wn() + '<p class="muted sm">HatRack shows these as a short tour after each update — Help (?) → What’s new.</p>'))
+        title = f" <span class='rt'>{e(r['title'])}</span>" if r.get('title') else ''
+        cur = " <span class='cur'>Current</span>" if r['version'] == VER else ''
+        out.append(f"<div class='rel'><h3><span class='rv'>{e(r['version'])}</span> <span class='rd'>{e(r['date'])}</span>{title}{cur}</h3><ul class='chg'>{''.join(_chg(it) for it in r['items'])}</ul></div>")
+    return '<div class="cl">' + ''.join(out) + '</div>'
+S.append(section('whats-new', 'all', 'Change log', f'''<p>Every release of HatRack, newest first — HatRack {VER} is at the top. In the app, Help (?) → <b>What’s new</b> shows the latest changes for you, and Configure → <b>Change log</b> has the full history with filters and downloads. The same list is kept as <code>CHANGELOG.md</code> in the repository.</p>''' + _wn(), 'What changed, release by release.'))
 
 # ---------------------------------------------------------------- page
 CSS = r'''
@@ -636,6 +689,24 @@ body[data-role="user"] [data-role="admin"],body[data-role="admin"] [data-role="u
 .tbl tr:last-child td{border-bottom:0}
 .tbl td:first-child{min-width:150px}
 .compare .y{color:var(--accent);font-weight:700} .compare .n{color:var(--muted)}
+/* change log */
+.k-new{--kc:#2E8A5E;--kc-soft:#DCF0E2} .k-improved{--kc:#3D74C4;--kc-soft:#DCE8F8} .k-fixed{--kc:#C58A12;--kc-soft:#FAF0C2} .k-changed{--kc:#7F5BC9;--kc-soft:#E9E1F7} .k-removed{--kc:#C2574A;--kc-soft:#FCE3E0}
+:root[data-theme="dark"] .k-new{--kc-soft:#1B3226} :root[data-theme="dark"] .k-improved{--kc-soft:#1A2B40} :root[data-theme="dark"] .k-fixed{--kc-soft:#373018} :root[data-theme="dark"] .k-changed{--kc-soft:#2A2240} :root[data-theme="dark"] .k-removed{--kc-soft:#3B2321}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .k-new{--kc-soft:#1B3226}:root:not([data-theme="light"]) .k-improved{--kc-soft:#1A2B40}:root:not([data-theme="light"]) .k-fixed{--kc-soft:#373018}:root:not([data-theme="light"]) .k-changed{--kc-soft:#2A2240}:root:not([data-theme="light"]) .k-removed{--kc-soft:#3B2321}}
+.kchip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border-radius:999px;padding:2px 9px 2px 8px;white-space:nowrap;background:var(--kc-soft);color:var(--ink);line-height:1.5;justify-self:start}
+.kchip::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--kc)}
+.achip{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:1px 8px;background:var(--admin-soft);color:var(--admin);margin-left:6px;vertical-align:1px}
+.cl{display:flex;flex-direction:column;gap:18px;margin-top:14px}
+.rel h3{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;margin:0 0 8px;font-size:17px}
+.rel .rv{font-size:19px} .rel .rd{font:400 14px var(--font-ui);color:var(--muted)} .rel .rt{color:var(--ink2)}
+.rel .cur{font:700 11.5px var(--font-ui);background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:2px 9px}
+.chg{list-style:none;margin:0;padding:0;background:var(--surface);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;max-width:880px}
+.chg li{display:grid;grid-template-columns:100px minmax(0,1fr);gap:12px;padding:10px 14px;border-top:1px solid var(--line2);font-size:15px}
+.chg li:first-child{border-top:0}
+.chg li div span:last-child{display:block;color:var(--ink2)}
+@media (max-width:640px){.chg li{grid-template-columns:1fr;gap:4px}}
+pre.code{background:var(--surface);border-radius:12px;box-shadow:var(--shadow);padding:14px 16px;overflow:auto;font:13.5px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;max-width:880px}
+pre.code code{background:none;padding:0;font:inherit}
 .tips,.rules,.new{padding-left:20px;margin:8px 0 12px;display:flex;flex-direction:column;gap:7px;max-width:72ch}
 .rules{background:var(--surface);border-radius:12px;padding:14px 18px 14px 34px;box-shadow:var(--shadow)}
 .tip-line{font-size:15px;color:var(--ink2);border-left:3px solid var(--accent);padding-left:12px}
@@ -899,6 +970,11 @@ TOUR_STEPS = [
     T('u-help', 'user', 'Help is one click away', 'Reopen this tour, read the illustrated guide, or check the shortcuts. Every dialog also has a “How this works” link.', 'help-menu',
       pins=[('tour', 'This tour.'), ('guide', 'The full illustrated guide.'), ('tips', 'Keyboard shortcuts.'), ('new', 'What changed in this version.')],
       action=('help', 'Open the Help menu'), guide='start'),
+    T('u-whatsnew', 'user', 'What’s new after an update', 'The first time you open HatRack after an update, a summary shows what changed — just the changes that apply to you.', 'whatsnew',
+      pins=[('hero', 'This update, and the version you came from.'), ('role', 'Everyday use or Admin — your choice on this device.'), ('card', 'One card per change.'),
+            ('?show', 'Show me opens the tour on that feature.'), ('log', 'The full change log.')],
+      tips=['Help (?) → What’s new opens it again', 'Nothing opens if an update has no changes for you'],
+      action=('whatsnew', 'Open What’s new'), guide='whats-new'),
     # ---- setting up
     T('a-welcome', 'admin', 'Setting up happens in Configure', 'Usually once, by whoever owns the structure. HatRack has no accounts — the “admin” is simply that person.', 'cfg-groups',
       pins=[('nav', 'Groups, types, priorities, statuses, durations, fields, data.'), ('levels', 'Name your levels to match how you talk.'), ('how', '“How this works” opens the guide here.')],
@@ -927,11 +1003,16 @@ TOUR_STEPS = [
     T('a-template', 'admin', 'One structure for the whole team', 'Share a setup template. Applying it adds what’s missing — matched by name — and keeps everyone’s own tasks.', 'cfg-data',
       pins=[('template', 'Download setup template (no tasks).'), ('restore', 'Everyone else: Restore → Apply setup.')],
       action=('cfg:data', 'Open Data & backup'), guide='admin-data'),
+    T('a-changelog', 'admin', 'The change log', 'Every release and every change, in order — with who it’s for. Choose which updates this device shows, and download the history for your records.', 'cfg-changelog',
+      pins=[('role', 'Updates for your role on this device.'), ('filters', 'Filter by who it’s for, or by kind.'), ('order', 'Oldest or newest first.'),
+            ('dl', 'Download as CSV, Markdown or JSON.'), ('release', 'Each release, with its date.'), ('?show', 'Show me opens the tour there.')],
+      tips=['Record each change in <code>src/release.json</code> with a kind and who it’s for', 'Publishing stops if the app changed without a new entry'],
+      action=('cfg:changelog', 'Open the change log'), guide='admin-changelog'),
     T('a-online', 'admin', 'Put HatRack online', 'Upload the folder to GitHub and turn on Pages for free hosting at your-name.github.io.', img='apple-touch-icon.png', icon=True,
       tips=['Settings → Pages → Source: <b>GitHub Actions</b> — this also refreshes the docs on every update', 'iPhone: Share → Add to Home Screen. Android: Install app.', 'The home-screen app keeps its own data — move it with Backup → Restore'],
       guide='admin-deploy'),
     T('a-docs', 'admin', 'This tour keeps up with the app', 'Every update rebuilds the screenshots, the guide and these slides. The build stops if a new feature has no docs.',
-      tips=['Change the app in <code>src/</code> and note it in <code>src/release.json</code>', 'Push to GitHub — or run <code>python3 release.py</code> on your computer', 'Everyone sees a short “What’s new” tour after an update'],
+      tips=['Change the app in <code>src/</code> and record it in the change log (<code>src/release.json</code>)', 'Push to GitHub — or run <code>python3 release.py</code> on your computer', 'Everyone sees What’s new for their role after an update'],
       guide='admin-docs'),
 ]
 
@@ -941,7 +1022,9 @@ def build_tour():
     for st in TOUR_STEPS:
         s = {k: st[k] for k in ('id', 'title', 'text', 'tips', 'guide', 'icon')}
         if st['action']: s['action'] = {'id': st['action'][0], 'label': st['action'][1]}
-        if st['shot']:
+        if st['shot'] and st['shot'] not in M:
+            print(f"  (tour step {st['id']}: no {st['shot']} screen yet — it's taken in the next pass)"); s['pins'] = []
+        elif st['shot']:
             m = M[st['shot']]
             src = raw / f"{st['shot']}.png"
             im = Image.open(src if src.exists() else ROOT / 'guide' / f"{st['shot']}.webp").convert('RGB')
@@ -953,7 +1036,8 @@ def build_tour():
             s.update(img=f'guide/{name}', w=im.width // 2, h=im.height // 2)
             pins = []
             for key, label in st['pins']:
-                p = next((p for p in m['pins'] if p['key'] == key), None)
+                p = next((p for p in m['pins'] if p['key'] == key.lstrip('?')), None)
+                if not p and key.startswith('?'): continue
                 if not p: raise SystemExit(f"tour step {st['id']}: pin {key} missing from {st['shot']}")
                 fx = lambda v: (v / 100 - x0) / (x1 - x0) * 100
                 fy = lambda v: (v / 100 - y0) / (y1 - y0) * 100

@@ -1,33 +1,57 @@
 {
-  "version": "1.2.0",
-  "date": "2026-11-18",
+  "version": "1.3.0",
+  "date": "2026-11-20",
   "changelog": [
+    {
+      "version": "1.3.0",
+      "date": "2026-11-20",
+      "title": "A change log, and updates that fit your role",
+      "items": [
+        { "kind": "new", "audience": "admin", "title": "Change log", "text": "Configure → Change log lists every release and every change in order, with filters and downloads (CSV, Markdown, JSON) for your records.", "slide": "a-changelog" },
+        { "kind": "improved", "audience": "all", "title": "What’s new, made for you", "text": "After an update, HatRack opens an illustrated summary of the changes that apply to you, with a Show me button on each. Help → What’s new shows it again.", "slide": "u-whatsnew" },
+        { "kind": "new", "audience": "all", "title": "Updates for your role", "text": "Choose Everyday use or Admin for this device. Everyday users see changes to daily work; admins also see setup changes. Applying an admin’s setup template switches a new team member to Everyday use.", "slide": "u-whatsnew" },
+        { "kind": "new", "audience": "admin", "title": "The log can’t skip a change", "text": "Publishing stops if the app changed without a new version and a change-log entry, and a CHANGELOG.md file in the repository is rebuilt from the same list.", "slide": "a-changelog" }
+      ]
+    },
     {
       "version": "1.2.0",
       "date": "2026-11-18",
+      "title": "Getting-started tour",
       "items": [
-        { "title": "Getting-started tour", "text": "Step-by-step slides with real screenshots — one track for everyday use, one for setting up. Opens on first launch; Help → Getting started tour any time.", "slide": "u-help" },
-        { "title": "What’s new after every update", "text": "When HatRack is updated, you get a short tour of what changed. Help → What’s new shows it again." },
-        { "title": "Docs that keep up with the app", "text": "Screenshots, the guide and the tour are rebuilt with every update, and the build stops if a new feature isn’t documented.", "slide": "a-docs" }
+        { "kind": "new", "audience": "all", "title": "Getting-started tour", "text": "Step-by-step slides with real screenshots — one track for everyday use, one for setting up. Opens on first launch; Help → Getting started tour any time.", "slide": "u-help" },
+        { "kind": "new", "audience": "all", "title": "What’s new after every update", "text": "When HatRack is updated, you get a short tour of what changed. Help → What’s new shows it again." },
+        { "kind": "new", "audience": "admin", "title": "Docs that keep up with the app", "text": "Screenshots, the guide and the tour are rebuilt with every update, and the build stops if a new feature isn’t documented.", "slide": "a-docs" },
+        { "kind": "new", "audience": "admin", "title": "Published automatically", "text": "HatRack is hosted with GitHub Pages; every push rebuilds the app and its docs and republishes the site.", "slide": "a-online" }
       ]
     },
     {
       "version": "1.1.0",
       "date": "2026-10-30",
+      "title": "Subtasks, colors and the visual guide",
       "items": [
-        { "title": "Subtasks with drag-to-nest", "text": "Drop a card on the middle of another card — on the board or in the outline — to make it a subtask. Up to three levels.", "slide": "u-nest" },
-        { "title": "Three-line previews", "text": "Long titles and notes fold away; Show more opens notes, subnotes and subtasks.", "slide": "u-cards" },
-        { "title": "Card colors and right-click menu", "text": "Tint any card; right-click for color, subtasks, nesting and moving.", "slide": "u-colors" },
-        { "title": "Drag in the outline", "text": "Reorder, move and nest tasks, and move subnotes between tasks.", "slide": "u-outline" },
-        { "title": "Setup templates", "text": "Share one structure with a team; Restore → Apply setup merges it by name.", "slide": "a-template" },
-        { "title": "Home-screen icon and visual guide", "text": "Install HatRack on a phone, and open the illustrated guide from Help.", "slide": "a-online" }
+        { "kind": "new", "audience": "all", "title": "Subtasks with drag-to-nest", "text": "Drop a card on the middle of another card — on the board or in the outline — to make it a subtask. Up to three levels.", "slide": "u-nest" },
+        { "kind": "new", "audience": "all", "title": "Three-line previews", "text": "Long titles and notes fold away; Show more opens notes, subnotes and subtasks.", "slide": "u-cards" },
+        { "kind": "new", "audience": "all", "title": "Card colors and right-click menu", "text": "Tint any card; right-click for color, subtasks, nesting and moving.", "slide": "u-colors" },
+        { "kind": "improved", "audience": "all", "title": "Drag in the outline", "text": "Reorder, move and nest tasks, and move subnotes between tasks.", "slide": "u-outline" },
+        { "kind": "new", "audience": "admin", "title": "Setup templates", "text": "Share one structure with a team; Restore → Apply setup merges it by name.", "slide": "a-template" },
+        { "kind": "new", "audience": "all", "title": "Visual guide", "text": "An illustrated guide to every screen, menu and setting, opened from Help.", "slide": "u-help" },
+        { "kind": "new", "audience": "all", "title": "Home-screen icon", "text": "Add HatRack to a phone’s home screen; it gets its own icon.", "slide": "u-phone" }
       ]
     },
     {
       "version": "1.0.0",
       "date": "2026-10-28",
+      "title": "First release",
       "items": [
-        { "title": "First release", "text": "Import, triage, board, list, outline, reports and exports to Todoist, Asana, spreadsheets, Markdown and calendars." }
+        { "kind": "new", "audience": "all", "title": "Quick add with shortcuts", "text": "Type a task and press Enter; @group, #type, !priority, ~time, ^date and *repeat fill in the details.", "slide": "u-quick" },
+        { "kind": "new", "audience": "all", "title": "Import long lists", "text": "Paste notes or open a .txt, .md or .csv file. Headings become groups, keywords sort the rest, and repeats merge into one card.", "slide": "u-import" },
+        { "kind": "new", "audience": "all", "title": "Triage", "text": "Sort unsorted tasks one at a time, with one key press each.", "slide": "u-triage" },
+        { "kind": "new", "audience": "all", "title": "Visual board", "text": "Drag cards between columns to move them, Alt-drag to copy, paste text to add; columns and rows can be any field.", "slide": "u-move" },
+        { "kind": "new", "audience": "all", "title": "List, Outline and Reports", "text": "A sortable table, a printable outline by group, and the numbers: hours, overdue, next 14 days.", "slide": "u-list" },
+        { "kind": "new", "audience": "all", "title": "Notes, subnotes and attachments", "text": "Each task holds notes, a subnote checklist, links and files kept in the browser.", "slide": "u-attach" },
+        { "kind": "new", "audience": "all", "title": "Export to your task app", "text": "Todoist, Asana, spreadsheet CSV, Markdown, plain list, calendar (.ics) and HatRack files.", "slide": "u-export" },
+        { "kind": "new", "audience": "admin", "title": "Configure the structure", "text": "Parents, entities and sub-branches with auto-sort keywords; task types, priorities, statuses, durations and custom fields.", "slide": "a-groups" },
+        { "kind": "new", "audience": "admin", "title": "Backups and restore", "text": "Download everything as a file; restore it by merging or replacing.", "slide": "a-backup" }
       ]
     }
   ]

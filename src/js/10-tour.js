@@ -10,22 +10,22 @@ function cmpVer(a, b) {
 }
 const TRACKS = [['user', 'Everyday use'], ['admin', 'Setting up'], ['whatsnew', 'What’s new']];
 
-/** slides for "What's new": a summary, then the slide each new item points to */
+/** slides for "What's new": a summary, then the slide each change points to — only the changes for this device's role */
 function whatsNewSlides(since) {
   const T0 = tourData(); if (!T0) return [];
-  const rels = RELEASE.changelog.filter(r => (since ? cmpVer(r.version, since) > 0 : r.version === RELEASE.version));
+  const rels = releasesSince(since, myRole());
   const items = rels.flatMap(r => r.items.map(it => ({ ...it, version: r.version })));
   if (!items.length) return [];
   const versions = [...new Set(items.map(i => i.version))];
   const out = [{
     id: 'wn-summary', title: `What’s new in HatRack ${RELEASE.version}`,
-    text: versions.length > 1 ? `Everything that changed since ${since}.` : `Released ${fmtLongDate(rels[0].date)}.`,
+    text: versions.length > 1 ? `Everything that changed since ${since} for ${myRole() === 'admin' ? 'admins' : 'everyday use'}.` : `Released ${fmtLongDate(rels[0].date)}.`,
     list: items.map(i => ({ title: i.title, text: i.text, version: versions.length > 1 ? i.version : '' })),
   }];
   const used = new Set();
   items.forEach(it => {
     const s = it.slide && T0.slides[it.slide];
-    if (s && !used.has(s.id)) { used.add(s.id); out.push({ ...s, id: 'wn-' + s.id, title: esc(it.title), text: esc(it.text), tips: [], badge: `New in ${it.version}` }); }
+    if (s && !used.has(s.id)) { used.add(s.id); out.push({ ...s, id: 'wn-' + s.id, title: esc(it.title), text: esc(it.text), tips: [], badge: `${KINDS[kindOf(it)]} in ${it.version}` }); }
   });
   return out;
 }
@@ -51,6 +51,7 @@ function tourAction(id) {
     case 'list': case 'outline': case 'reports': return go(id);
     case 'export': return openExport();
     case 'help': return helpMenu($('#btn-help'));
+    case 'whatsnew': return openWhatsNew();
   }
   if (id.startsWith('cfg:')) { U.settingsTab = id.slice(4); saveUI(); setView('settings'); return; }
   if (id.startsWith('guide:')) return openGuide(id.slice(6));
@@ -160,14 +161,19 @@ function onTourKey(e) {
   else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { if (tourState.i > 0) { tourState.i--; renderTour(); } e.preventDefault(); e.stopPropagation(); }
 }
 
-/** first launch: welcome tour. After an update: what's new. Add ?notour to the address to skip both. */
+/** First launch: the welcome tour. The first time HatRack opens after an update: the What's new summary,
+    with only the changes for this device's role (nothing opens if none apply). Each version's first
+    opening is recorded for the change log. Add ?notour to the address to skip both. */
 function maybeAutoTour() {
   const skip = new URLSearchParams(location.search).has('notour');
   const seen = U.lastVersion, fresh = !D.tasks.length && !D.areas.length;
-  if (cmpVer(seen, RELEASE.version) !== 0) { U.lastVersion = RELEASE.version; saveUI(); }
-  if (skip || !tourData()) return;
+  U.versions = { ...(U.versions || {}) };
+  if (!U.versions[RELEASE.version]) U.versions[RELEASE.version] = new Date().toISOString();
+  if (cmpVer(seen, RELEASE.version) !== 0) U.lastVersion = RELEASE.version;
+  saveUI();
+  if (skip) return;
   if (!seen) {
-    if (fresh && !U.tourSeen) setTimeout(() => openTour('start'), 300);
-    else if (whatsNewSlides('1.0.0').length) setTimeout(() => openTour('whatsnew', { since: '1.0.0' }), 300);
-  } else if (cmpVer(seen, RELEASE.version) < 0 && whatsNewSlides(seen).length) setTimeout(() => openTour('whatsnew', { since: seen }), 300);
+    if (fresh && !U.tourSeen) { if (tourData()) setTimeout(() => openTour('start'), 300); }
+    else if (changesFor(myRole(), '1.0.0').length) setTimeout(() => openWhatsNew({ since: '1.0.0', auto: true }), 300);
+  } else if (cmpVer(seen, RELEASE.version) < 0 && changesFor(myRole(), seen).length) setTimeout(() => openWhatsNew({ since: seen, auto: true }), 300);
 }

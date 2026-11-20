@@ -7,12 +7,17 @@ Checks that:
   * every feature has a guide section in guide.html and a step in guide/tour.js,
   * the screenshots were captured from the current index.html,
   * the version in src/release.json matches the app, the guide and the tour,
-  * every image the guide and tour use exists.
+  * every image the guide and tour use exists,
+  * the change log is complete: every entry is valid, CHANGELOG.md matches it, and the app's code
+    hasn't changed since its version was published (src/release-lock.json) — a change to the app
+    needs a new version and a change-log entry.
 """
 import hashlib, json, re, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+import build  # noqa: E402  (validate_release, changelog_md, app_fingerprint)
 app = (ROOT / 'index.html').read_text()
 guide = (ROOT / 'guide.html').read_text()
 tour_js = (ROOT / 'guide' / 'tour.js').read_text() if (ROOT / 'guide' / 'tour.js').exists() else ''
@@ -56,6 +61,24 @@ for src in set(re.findall(r'src="(guide/[^"]+|apple-touch-icon\.png)"', guide)):
 for s in tour['slides'].values():
     if s.get('img') and not (ROOT / s['img']).exists(): errors.append(f'Tour step {s["id"]} uses a missing image: {s["img"]}')
 
+# the change log
+errors += build.validate_release(rel)
+md = ROOT / 'CHANGELOG.md'
+if not md.exists() or md.read_text() != build.changelog_md(rel): errors.append('CHANGELOG.md is out of date — run build.py.')
+lock_p = ROOT / 'src' / 'release-lock.json'
+published = json.loads(lock_p.read_text())['published'] if lock_p.exists() else {}
+if published:
+    newest = max(published, key=build.ver_key)
+    if build.ver_key(v) < build.ver_key(newest):
+        errors.append(f'release.json says {v}, but {newest} has already been published — the version can only go up.')
+    elif v in published and published[v]['fingerprint'] != build.app_fingerprint():
+        errors.append(f'The app changed after HatRack {v} was published. In src/release.json, raise "version" (e.g. to a new patch or minor number), '
+                      f'set "date", and add an entry at the top of "changelog" saying what changed (kind, audience, title, text) — that is how the change log stays complete.')
+for r in rel['changelog']:
+    for it in r['items']:
+        if it.get('slide') and it['slide'] not in tour['slides']: errors.append(f'release.json: {r["version"]} “{it["title"]}” points at tour step {it["slide"]}, which doesn’t exist.')
+
 if errors:
     print('Docs check failed:\n  - ' + '\n  - '.join(errors)); sys.exit(1)
-print(f'Docs check passed: {len(ui)} controls in {len(reg)} features, {len(tour["slides"])} tour steps, screens from this build of HatRack {v}.')
+n = sum(len(r['items']) for r in rel['changelog'])
+print(f'Docs check passed: {len(ui)} controls in {len(reg)} features, {len(tour["slides"])} tour steps, {n} changes in {len(rel["changelog"])} releases logged, screens from this build of HatRack {v}.')

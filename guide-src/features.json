@@ -22,7 +22,8 @@
     { "id": "reports",    "name": "Reports", "role": "user", "ui": ["view:reports"], "guide": "views", "tour": "u-reports" },
     { "id": "export",     "name": "Export", "role": "user", "ui": ["btn-export", "sb:export", "fmt:csv", "fmt:todoist", "fmt:asana", "fmt:md", "fmt:txt", "fmt:ics", "fmt:json"], "guide": "export", "tour": "u-export" },
     { "id": "phone",      "name": "Phones and dark mode", "role": "user", "ui": ["btn-theme"], "guide": "mobile", "tour": "u-phone" },
-    { "id": "help",       "name": "Help, tour and guide", "role": "user", "ui": ["btn-help", "help:tour", "help:guide", "help:tips", "help:admintour", "help:whatsnew", "act:guide", "act:tour"], "guide": "tour", "tour": "u-help" },
+    { "id": "help",       "name": "Help, tour and guide", "role": "user", "ui": ["btn-help", "help:tour", "help:guide", "help:tips", "help:admintour", "act:guide", "act:tour"], "guide": "tour", "tour": "u-help" },
+    { "id": "whatsnew",   "name": "What’s new after an update", "role": "user", "ui": ["help:whatsnew"], "guide": "whats-new", "tour": "u-whatsnew" },
     { "id": "configure",  "name": "Configure", "role": "admin", "ui": ["btn-settings", "act:setup"], "guide": "admin", "tour": "a-welcome" },
     { "id": "groups",     "name": "Groups and levels", "role": "admin", "ui": ["tab:hierarchy"], "guide": "admin-groups", "tour": "a-groups" },
     { "id": "keywords",   "name": "Auto-sort keywords", "role": "admin", "ui": [], "guide": "admin-groups", "tour": "a-keywords" },
@@ -31,6 +32,7 @@
     { "id": "fields",     "name": "Custom fields", "role": "admin", "ui": ["tab:fields"], "guide": "admin-fields", "tour": "a-fields" },
     { "id": "backup",     "name": "Backups and restore", "role": "admin", "ui": ["tab:data", "data:backup", "data:wipe"], "guide": "admin-data", "tour": "a-backup" },
     { "id": "template",   "name": "Setup templates", "role": "admin", "ui": ["data:template"], "guide": "admin-data", "tour": "a-template" },
+    { "id": "changelog",  "name": "Change log and roles", "role": "admin", "ui": ["tab:changelog"], "guide": "admin-changelog", "tour": "a-changelog" },
     { "id": "hosting",    "name": "Hosting and phones", "role": "admin", "ui": [], "guide": "admin-deploy", "tour": "a-online" },
     { "id": "docs",       "name": "Keeping docs current", "role": "admin", "ui": [], "guide": "admin-docs", "tour": "a-docs" }
   ]
