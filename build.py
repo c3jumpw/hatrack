@@ -6,19 +6,24 @@ The version and change log come from src/release.json — the one place every ch
 The getting-started tour and the guide's screenshots are separate files (guide/tour.js,
 guide/*.webp) made by guide-src/build_guide.py — run release.py to rebuild everything in one go.
 
+  python3 build.py               index.html + CHANGELOG.md
+  python3 build.py --site DIR    also run the source check (guide-src/check_docs.py --source) and copy the
+                                 published files into DIR — this is the Vercel build (see vercel.json)
+
 Also used as a module by release.py and guide-src/check_docs.py:
   validate_release(rel) -> list of problems with src/release.json
   changelog_md(rel)     -> the text of CHANGELOG.md
   app_fingerprint()     -> a hash of the app's code (everything in src/ except release.json),
                            so a published version can't change without a new change-log entry
 """
-import hashlib, json, re, sys
+import hashlib, json, re, shutil, subprocess, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 SRC = ROOT / "src"
 KINDS = {"new": "New", "improved": "Improved", "fixed": "Fixed", "changed": "Changed", "removed": "Removed"}
 AUDIENCES = {"all": "Everyone", "admin": "Admins"}
+SITE_FILES = ["index.html", "guide.html", "guide", "apple-touch-icon.png", "icon-192.png", "icon-512.png", "manifest.webmanifest"]
 
 
 def ver_key(v):
@@ -96,6 +101,15 @@ def main():
     (ROOT / "CHANGELOG.md").write_text(changelog_md(release))
     n = sum(len(r["items"]) for r in release["changelog"])
     print(f"index.html  {len(out) / 1024:.1f} KB  (HatRack {release['version']}) · CHANGELOG.md  {len(release['changelog'])} releases, {n} changes")
+    if "--site" in sys.argv:
+        site = ROOT / sys.argv[sys.argv.index("--site") + 1]
+        if subprocess.run([sys.executable, str(ROOT / "guide-src" / "check_docs.py"), "--source"]).returncode:
+            sys.exit("✗ Not published: fix the problems above (see CLAUDE.md).")
+        shutil.rmtree(site, ignore_errors=True); site.mkdir(parents=True)
+        for name in SITE_FILES:
+            src = ROOT / name
+            (shutil.copytree if src.is_dir() else shutil.copy2)(src, site / name)
+        print(f"site → {site.relative_to(ROOT)}/  ({', '.join(SITE_FILES)})")
 
 
 if __name__ == "__main__":

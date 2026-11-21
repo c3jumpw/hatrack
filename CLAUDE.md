@@ -27,4 +27,4 @@ pip install playwright pillow && python3 -m playwright install chromium
 python3 release.py            # build, screenshots, guide, tour, CHANGELOG.md, then all checks
 ```
 
-Pushing to `main` runs the same steps in `.github/workflows/release.yml` with `--publish`, commits the refreshed files and deploys GitHub Pages.
+Pushing to `main` publishes through Vercel (project `mkc-hatrack`, https://hatrack.mkcworkspace.com/), which runs `python3 build.py --site public`: the build plus `check_docs.py --source`, so undocumented features or unlogged changes never go live. `.github/workflows/release.yml` then runs `release.py --publish`, re-taking the screenshots and committing the refreshed guide, tour and lock file. Vercel publishes that commit too.

@@ -453,21 +453,21 @@ S.append(section('admin-changelog', 'admin', 'Change log & updates', f"""
 """, 'Every update, recorded — and shown to the people it affects.'))
 
 FILES = [('index.html', 'the app'), ('guide.html', 'this guide'), ('guide/', 'its screenshots — keep the folder'), ('apple-touch-icon.png', 'iPhone home-screen icon'),
-         ('icon-192.png · icon-512.png', 'Android and desktop icons'), ('manifest.webmanifest', 'makes it installable'), ('.nojekyll', 'tells GitHub to serve files as-is'), ('README.md', 'notes for the repository')]
+         ('icon-192.png · icon-512.png', 'Android and desktop icons'), ('manifest.webmanifest', 'makes it installable'), ('vercel.json', 'how Vercel builds and serves it'), ('CHANGELOG.md', 'every change, newest first'), ('README.md', 'notes for the repository')]
 S.append(section('admin-deploy', 'admin', 'Put HatRack online', f'''
 <div class="pair">
 <div><h3>The files</h3><ul class="files">{"".join(f"<li><code>{e(a)}</code><span>{e(b)}</span></li>" for a, b in FILES)}</ul></div>
-<div><h3>GitHub Pages</h3><ol class="checklist">
-<li>Create a repository on GitHub and push every file, including the <code>.github</code>, <code>guide</code>, <code>src</code> and <code>guide-src</code> folders.</li>
-<li>Settings → Pages → Build and deployment → Source: <b>GitHub Actions</b>.</li>
-<li>Each push rebuilds the app, the docs and the change log, then publishes. The first takes a few minutes.</li>
-<li>Open <code>https://your-name.github.io/repository-name/</code>.</li></ol>
-<h3>Your own domain</h3>
+<div><h3>How it’s hosted</h3><p>HatRack lives at <b>hatrack.mkcworkspace.com</b>. The code is on GitHub; <b>Vercel</b> builds and serves every commit to <code>main</code>.</p>
 <ol class="checklist">
-<li>At your DNS provider, add a <b>CNAME</b> record: name <code>hatrack</code>, value <code>your-name.github.io</code>.</li>
-<li>Settings → Pages → <b>Custom domain</b>: enter <code>hatrack.your-domain.com</code>, Save, then tick <b>Enforce HTTPS</b>.</li>
+<li><b>Push to GitHub.</b> Vercel runs <code>python3 build.py --site public</code>: it builds the app, checks that every feature is documented and every change is in the change log, and publishes. If a check fails, the live site stays as it was.</li>
+<li>A GitHub workflow then re-takes the screenshots and rebuilds the guide and tour, and commits them. Vercel publishes that commit too.</li></ol>
+<h3>Set it up again elsewhere</h3>
+<ol class="checklist">
+<li>In Vercel, <b>Add New → Project</b> and import the GitHub repository. <code>vercel.json</code> holds the build settings.</li>
+<li>Project → Settings → <b>Domains</b>: add <code>hatrack.your-domain.com</code>.</li>
+<li>At your DNS provider, add the <b>CNAME</b> record Vercel shows for it (name <code>hatrack</code>).</li>
 <li>Tasks are saved per address: download a backup at the old address first, then Restore at the new one.</li></ol>
-<p class="muted sm">Any static host works the same way. You can also just double-click <code>index.html</code> on your computer.</p></div>
+<p class="muted sm">Any static host works: publish <code>index.html</code>, <code>guide.html</code>, the <code>guide</code> folder and the icons. You can also just double-click <code>index.html</code> on your computer.</p></div>
 </div>
 <div class="install">
 <img src="apple-touch-icon.png" width="90" height="90" alt="The HatRack app icon: a white hat with an amber band hanging on a rack, on green">
@@ -475,14 +475,14 @@ S.append(section('admin-deploy', 'admin', 'Put HatRack online', f'''
 <p><b>iPhone:</b> open the address in Safari → Share → <b>Add to Home Screen</b>. <b>Android:</b> Chrome menu → <b>Add to Home screen</b> or <b>Install app</b>.</p>
 <p class="muted sm">The home-screen app keeps its own data, separate from the browser tab. Move tasks across with Backup → Restore.</p></div>
 </div>
-''', 'Free hosting on GitHub Pages, plus an icon for your phone.'))
+''', 'Hosted on Vercel at hatrack.mkcworkspace.com, plus an icon for your phone.'))
 
 S.append(section('admin-docs', 'admin', 'Keeping the guide and tour current', f'''
 <p>The guide, the tour and every screenshot are generated from the running app, so an update to HatRack updates its documentation in the same step.</p>
 <ol class="checklist">
 <li><b>Change the app</b> in <code>src/</code>.</li>
 <li><b>Record the change</b> in <code>src/release.json</code>: raise the version and add an entry to the change log saying what changed and who it’s for (<a href="#admin-changelog">how</a>). People see it in <b>What’s new</b> the next time they open HatRack, and it’s kept in Configure → Change log.</li>
-<li><b>Push to GitHub.</b> The included workflow rebuilds the app, re-takes every screenshot, regenerates this guide and the tour, checks them, and publishes the site. (One-time setup: Settings → Pages → Source: <b>GitHub Actions</b>.)</li>
+<li><b>Push to GitHub.</b> Vercel builds and publishes the app after checking the docs and the change log. The included workflow re-takes every screenshot, regenerates this guide and the tour, checks them, and commits them, and Vercel publishes that too.</li>
 </ol>
 <p>On your own computer, <code>python3 release.py</code> does the same thing.</p>
 <div class="warn"><b>The build stops on undocumented features and unrecorded changes.</b> If the app’s code changed since its version was published, publishing waits for a new version and change-log entry. A new button, view, Configure tab, export format or bulk action has to be listed in <code>guide-src/features.json</code> with a guide section and a tour step, and every numbered spot on every screenshot has to still match the app. Otherwise the check fails and the site isn’t published until the docs catch up.</div>
@@ -1008,8 +1008,8 @@ TOUR_STEPS = [
             ('dl', 'Download as CSV, Markdown or JSON.'), ('release', 'Each release, with its date.'), ('?show', 'Show me opens the tour there.')],
       tips=['Record each change in <code>src/release.json</code> with a kind and who it’s for', 'Publishing stops if the app changed without a new entry'],
       action=('cfg:changelog', 'Open the change log'), guide='admin-changelog'),
-    T('a-online', 'admin', 'Put HatRack online', 'Upload the folder to GitHub and turn on Pages for free hosting at your-name.github.io.', img='apple-touch-icon.png', icon=True,
-      tips=['Settings → Pages → Source: <b>GitHub Actions</b> — this also refreshes the docs on every update', 'iPhone: Share → Add to Home Screen. Android: Install app.', 'The home-screen app keeps its own data — move it with Backup → Restore'],
+    T('a-online', 'admin', 'Where HatRack lives', 'HatRack is at hatrack.mkcworkspace.com. Vercel builds and serves it from the GitHub repository on every push.', img='apple-touch-icon.png', icon=True,
+      tips=['Vercel only publishes when every feature is documented and every change is in the change log', 'iPhone: Share → Add to Home Screen. Android: Install app.', 'The home-screen app keeps its own data — move it with Backup → Restore'],
       guide='admin-deploy'),
     T('a-docs', 'admin', 'This tour keeps up with the app', 'Every update rebuilds the screenshots, the guide and these slides. The build stops if a new feature has no docs.',
       tips=['Change the app in <code>src/</code> and record it in the change log (<code>src/release.json</code>)', 'Push to GitHub — or run <code>python3 release.py</code> on your computer', 'Everyone sees What’s new for their role after an update'],

@@ -4,7 +4,7 @@
 
 ![HatRack board with sample data](guide/overview.webp)
 
-- **No install, no server.** The app is a single `index.html`. Open it, or host it free on GitHub Pages.
+- **Live at [hatrack.mkcworkspace.com](https://hatrack.mkcworkspace.com/).** No install, no server: the app is a single `index.html`, served by Vercel.
 - **Private by default.** Everything is saved in your browser on your device. Nothing is uploaded.
 - **Getting-started tour built in.** Step-by-step slides with real screenshots — an *Everyday use* track and a *Setting up* track for admins. It opens the first time HatRack starts; Help (?) → *Getting started tour* reopens it.
 - **A change log, and updates for your role.** Configure → *Change log* keeps every release and change in order, with filters and CSV / Markdown / JSON downloads ([CHANGELOG.md](CHANGELOG.md) has the same list). After an update, each person sees an illustrated *What's new* with just the changes for their role — everyday use or admin.
@@ -20,34 +20,30 @@
 | `index.html` | The app |
 | `guide.html` + `guide/` | The visual guide, the tour (`guide/tour.js`) and their screenshots — keep the folder next to `index.html` |
 | `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `manifest.webmanifest` | Home-screen icons and install support for phones |
-| `.nojekyll` | Tells GitHub Pages to serve the files as they are |
+| `vercel.json` | How Vercel builds and serves the site (`python3 build.py --site public`) |
 | `src/`, `build.py` | The app's source; `src/release.json` holds the version and the change log |
 | `CHANGELOG.md` | Every release and change, newest first — generated from `src/release.json` |
 | `src/release-lock.json` | Written when a version is published, so later code changes need a new change-log entry |
 | `CLAUDE.md` | Rules for anyone (or any AI assistant) changing the app |
 | `release.py`, `guide-src/` | Rebuilds the screenshots, guide and tour, and checks every feature is documented (`guide-src/features.json`) |
-| `.github/workflows/release.yml` | Runs `release.py` and publishes the site on every push |
+| `.github/workflows/release.yml` | Runs `release.py` on every push: re-takes the screenshots, rebuilds the guide and tour, checks everything, and commits the refreshed files |
 
-## Put it on GitHub Pages (5 minutes)
+## Where it's hosted
 
-1. On GitHub, click **New repository**. Name it `hatrack` (or anything). On a free plan the repository must be public for Pages.
-2. Upload **everything in this folder**, including the `guide`, `src`, `guide-src` and `.github` folders. (The web uploader skips folders that start with a dot — use the command line below, or GitHub Desktop, so `.github` comes along.)
-3. Go to **Settings → Pages**. Under **Build and deployment**, set **Source** to **GitHub Actions**.
-4. Open the **Actions** tab: the *Build, document and publish* workflow runs on every push (or click **Run workflow**). In a few minutes the app is live at `https://<your-username>.github.io/hatrack/`, with the guide at `…/hatrack/guide.html`.
-5. *Optional — your own domain.* At your DNS provider add a **CNAME** record `hatrack` → `<your-username>.github.io`, then in **Settings → Pages → Custom domain** enter `hatrack.your-domain.com`, save, and tick **Enforce HTTPS** once it's offered. Tasks are saved per web address, so download a backup at the old address first and restore it at the new one.
+HatRack lives at **https://hatrack.mkcworkspace.com/** (the Vercel project `mkc-hatrack`, linked to this repository).
 
-Prefer not to use Actions? Set **Source** to *Deploy from a branch* → **main** / **(root)** instead. The site works the same, but the screenshots, guide and tour only refresh when you run `python3 release.py` yourself.
+- **Every push to `main`** is built and published by Vercel with `python3 build.py --site public`. That builds `index.html` and `CHANGELOG.md`, runs the source checks (every control documented, change log valid, no unlogged changes since the last published version), and publishes `index.html`, `guide.html`, `guide/` and the icons. If a check fails, Vercel keeps the previous version live.
+- **The GitHub workflow** then runs `release.py --publish`: it re-takes the screenshots, rebuilds the guide and tour, runs the full docs check, records the version in `src/release-lock.json`, and commits the refreshed files. Vercel publishes that commit too.
+- **DNS:** `hatrack.mkcworkspace.com` is a CNAME to the address Vercel shows under Project → Settings → Domains. `mkcworkspace.com` is managed at GoDaddy.
+- **The old address** (`c3jumpw.github.io/hatrack`) is no longer updated. It shows a notice pointing here, with a button to download a backup, because tasks are saved per web address.
 
-Prefer the command line?
+### Set up your own copy
 
-```bash
-git init hatrack && cd hatrack
-# copy everything from this folder in here
-git add . && git commit -m "HatRack"
-git branch -M main
-git remote add origin https://github.com/<your-username>/hatrack.git
-git push -u origin main
-```
+1. Push everything in this folder to a GitHub repository (use git or GitHub Desktop, so the `.github` folder comes along).
+2. In Vercel: **Add New → Project**, import the repository. `vercel.json` supplies the settings.
+3. Project → Settings → **Domains**: add your domain, then add the CNAME record Vercel shows at your DNS provider.
+
+Any static host works too: publish `index.html`, `guide.html`, the `guide` folder and the icons.
 
 To run it without GitHub, double-click `index.html`.
 

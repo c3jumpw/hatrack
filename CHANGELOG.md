@@ -4,6 +4,11 @@ Every release of HatRack and what changed, newest first. In the app: Configure �
 
 <!-- Generated from src/release.json by build.py — edit that file, not this one. -->
 
+## 1.3.1 — 2026-11-21 · New address: hatrack.mkcworkspace.com
+
+- **New address** _(Changed · Everyone)_ — HatRack now lives at hatrack.mkcworkspace.com. Tasks are saved per address, so the old github.io copy shows a notice with a backup button; restore the backup here with Configure → Data → Restore.
+- **Hosted on Vercel** _(Changed · Admins)_ — Vercel builds and serves the site from the GitHub repository, and its build refuses changes that are undocumented or missing from the change log. GitHub Actions still refreshes the screenshots, guide and tour.
+
 ## 1.3.0 — 2026-11-20 · A change log, and updates that fit your role
 
 - **Change log** _(New · Admins)_ — Configure → Change log lists every release and every change in order, with filters and downloads (CSV, Markdown, JSON) for your records.

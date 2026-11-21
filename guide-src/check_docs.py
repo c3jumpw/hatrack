@@ -11,6 +11,12 @@ Checks that:
   * the change log is complete: every entry is valid, CHANGELOG.md matches it, and the app's code
     hasn't changed since its version was published (src/release-lock.json) — a change to the app
     needs a new version and a change-log entry.
+
+  python3 guide-src/check_docs.py            everything (release.py, after the screens are re-taken)
+  python3 guide-src/check_docs.py --source   what can be checked before the screens are re-taken —
+                                             features documented in the guide/tour sources, change log
+                                             valid and complete. The Vercel build runs this, so a site
+                                             with undocumented features or unlogged changes never goes live.
 """
 import hashlib, json, re, sys
 from pathlib import Path
@@ -18,6 +24,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 import build  # noqa: E402  (validate_release, changelog_md, app_fingerprint)
+SOURCE = '--source' in sys.argv[1:]
 app = (ROOT / 'index.html').read_text()
 guide = (ROOT / 'guide.html').read_text()
 tour_js = (ROOT / 'guide' / 'tour.js').read_text() if (ROOT / 'guide' / 'tour.js').exists() else ''
@@ -27,6 +34,10 @@ rel = json.loads((ROOT / 'src' / 'release.json').read_text())
 meta_p = ROOT / 'guide-src' / 'capture-meta.json'
 meta = json.loads(meta_p.read_text()) if meta_p.exists() else {}
 errors = []
+if SOURCE:  # guide sections and tour steps as written in build_guide.py, not yet built
+    bg = (ROOT / 'guide-src' / 'build_guide.py').read_text()
+    guide = ''.join(f' id="{m}"' for m in re.findall(r"section\('([a-z0-9-]+)'", bg))
+    tour = {'slides': {m: {} for m in re.findall(r"\bT\('([a-z0-9-]+)'", bg)}, 'version': rel['version']}
 
 # controls in the app
 ui = set(re.findall(r'id="(btn-[a-z-]+)"', app)) | {'tb-' + m for m in re.findall(r'id="tb-([a-z-]+)"', app)}
@@ -48,15 +59,15 @@ for f in reg:
 
 # freshness and versions
 sha = hashlib.sha256((ROOT / 'index.html').read_bytes()).hexdigest()
-if meta.get('app_sha256') != sha: errors.append('Screenshots are older than the app: run release.py (or guide-src/capture.py) to re-take them.')
+if not SOURCE and meta.get('app_sha256') != sha: errors.append('Screenshots are older than the app: run release.py (or guide-src/capture.py) to re-take them.')
 v = rel['version']
 if rel['changelog'][0]['version'] != v: errors.append(f'release.json: the newest changelog entry ({rel["changelog"][0]["version"]}) should match the version ({v}).')
 if f'"version": "{v}"' not in app: errors.append(f'index.html was built from an older release.json — run build.py.')
-if tour.get('version') != v: errors.append(f'guide/tour.js is for version {tour.get("version")}, not {v} — run build_guide.py.')
-if f'HatRack {v}' not in guide: errors.append(f'guide.html does not mention HatRack {v} — run build_guide.py.')
+if not SOURCE and tour.get('version') != v: errors.append(f'guide/tour.js is for version {tour.get("version")}, not {v} — run build_guide.py.')
+if not SOURCE and f'HatRack {v}' not in guide: errors.append(f'guide.html does not mention HatRack {v} — run build_guide.py.')
 
 # images
-for src in set(re.findall(r'src="(guide/[^"]+|apple-touch-icon\.png)"', guide)):
+for src in set(re.findall(r'src="(guide/[^"]+|apple-touch-icon\.png)"', guide)) if not SOURCE else ():
     if not (ROOT / src).exists(): errors.append(f'guide.html uses a missing image: {src}')
 for s in tour['slides'].values():
     if s.get('img') and not (ROOT / s['img']).exists(): errors.append(f'Tour step {s["id"]} uses a missing image: {s["img"]}')
@@ -81,4 +92,6 @@ for r in rel['changelog']:
 if errors:
     print('Docs check failed:\n  - ' + '\n  - '.join(errors)); sys.exit(1)
 n = sum(len(r['items']) for r in rel['changelog'])
+if SOURCE:
+    print(f'Source check passed: {len(ui)} controls in {len(reg)} features documented, {n} changes in {len(rel["changelog"])} releases logged, HatRack {v}.'); sys.exit(0)
 print(f'Docs check passed: {len(ui)} controls in {len(reg)} features, {len(tour["slides"])} tour steps, {n} changes in {len(rel["changelog"])} releases logged, screens from this build of HatRack {v}.')

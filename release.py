@@ -11,7 +11,8 @@
 
 Usage:  python3 release.py [--fonts FOLDER] [--publish]
   --publish   after every check passes, record this version's code fingerprint in
-              src/release-lock.json (the GitHub workflow does this when it publishes the site)
+              src/release-lock.json (the GitHub workflow does this on every push to main;
+              Vercel serves the site — see vercel.json)
 Needs:  pip install playwright pillow && python3 -m playwright install chromium
 """
 import datetime, json, subprocess, sys

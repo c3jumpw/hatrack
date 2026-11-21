@@ -648,3 +648,8 @@ body.has-sel .col-key{display:inline-block}
   .cl-items li{grid-template-columns:1fr;gap:6px}
   .cl-tools input[type="search"]{width:100%}
 }
+/* the old github.io address (v1.3.1) */
+.moved-bar{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:9px 16px;background:var(--hl-soft);border-bottom:1px solid var(--line);font-size:14.5px;z-index:40}
+.moved-bar>span{flex:1 1 320px}
+.moved-bar a:not(.btn){font-weight:700}
+.moved-bar a.btn{text-decoration:none}

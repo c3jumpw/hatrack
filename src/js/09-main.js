@@ -169,6 +169,7 @@ function init() {
   renderAll();
   cleanOrphanFiles();
   maybeAutoTour();
+  maybeMovedNotice();
   try { navigator.storage?.persist?.(); } catch (_) { }
 }
 document.addEventListener('DOMContentLoaded', init);

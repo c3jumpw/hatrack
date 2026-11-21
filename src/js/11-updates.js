@@ -97,6 +97,21 @@ function onWhatsNewClick(e) {
   if (b.hasAttribute('data-wnlog')) { close(); U.settingsTab = 'changelog'; saveUI(); setView('settings'); }
 }
 
+/* ---------- the old address ----------
+   HatRack used to be served from GitHub Pages (*.github.io). Data is saved per address, so that copy
+   shows where HatRack lives now and offers a backup to carry tasks across. */
+const HOME_URL = 'https://hatrack.mkcworkspace.com/';
+function maybeMovedNotice() {
+  if (!/\.github\.io$/i.test(location.hostname)) return;
+  const n = D.tasks.length, bar = document.createElement('div');
+  bar.className = 'moved-bar'; bar.setAttribute('role', 'status');
+  bar.innerHTML = `<span><b>HatRack has moved to <a href="${HOME_URL}">hatrack.mkcworkspace.com</a>.</b> ${n
+    ? `Your ${plural(n, 'task')} here stay in this browser: download a backup, then use Configure → Data → Restore at the new address.`
+    : 'Nothing is saved at this old address.'}</span>${n ? '<button class="btn sm" data-moved="backup">Download backup</button>' : ''}<a class="btn sm primary" href="${HOME_URL}">Open the new address</a>`;
+  bar.addEventListener('click', e => { if (e.target.closest('[data-moved="backup"]')) downloadBackup(true); });
+  document.body.prepend(bar);
+}
+
 /* ---------- Configure → Change log ---------- */
 const clOpts = () => ({ order: 'asc', q: '', aud: '', kind: '', ...(U.cl || {}) });
 function paneChangelog() {
