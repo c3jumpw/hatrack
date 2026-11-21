@@ -1,8 +1,8 @@
-# Rebuilds HatRack's screenshots, guide, getting-started tour and change log on every push, checks that
-# every feature is documented and every change to the app is in the change log, then publishes the
-# site with GitHub Pages and records the published version in src/release-lock.json.
-# One-time setup: Settings → Pages → Build and deployment → Source: GitHub Actions.
-name: Build, document and publish
+# Keeps HatRack's docs in step with the app on every push: re-takes the screenshots, rebuilds the
+# guide, getting-started tour and change log, checks that every feature is documented and every change
+# to the app is in the change log, records the version in src/release-lock.json, and commits the
+# refreshed files. Vercel (vercel.json) publishes each commit to https://hatrack.mkcworkspace.com/.
+name: Build, document and check
 
 on:
   push:
@@ -11,15 +11,13 @@ on:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 concurrency:
-  group: pages
+  group: docs
   cancel-in-progress: true
 
 jobs:
-  build:
+  docs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -32,26 +30,9 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Build the app, re-take screenshots, rebuild the guide, tour and change log, check docs
         run: python release.py --publish
-      - name: Save the refreshed files back to the repository
+      - name: Save the refreshed files back to the repository (Vercel publishes them)
         run: |
           git config user.name "hatrack-docs"
           git config user.email "hatrack-docs@users.noreply.github.com"
           git add index.html guide.html guide guide-src/shots.json guide-src/capture-meta.json CHANGELOG.md src/release-lock.json
           git diff --cached --quiet || (git commit -m "Refresh screenshots, guide, tour and change log [skip ci]" && git push)
-      - name: Collect the site
-        run: |
-          mkdir -p _site
-          cp -r index.html guide.html guide apple-touch-icon.png icon-192.png icon-512.png manifest.webmanifest _site/
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v4
-        with:
-          path: _site
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
